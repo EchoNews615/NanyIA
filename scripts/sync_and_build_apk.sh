@@ -67,6 +67,19 @@ python -m py_compile \
   android_client/service.py \
   discord_bot.py
 
+ensure_modern_p4a_if_needed() {
+  local spec="$REPO_ROOT/android_client/buildozer.spec"
+  if [[ -f "$spec" ]]; then
+    sed -i 's/p4a.branch = stable/p4a.branch = master/g' "$spec" || true
+    if ! grep -q '^p4a.branch = ' "$spec"; then
+      printf '\np4a.branch = master\n' >> "$spec"
+    fi
+    if ! grep -q '^android.ndk = ' "$spec"; then
+      printf 'android.ndk = 25b\n' >> "$spec"
+    fi
+  fi
+}
+
 build_apk() {
   echo "[5/7] Building APK..."
   (
@@ -76,14 +89,24 @@ build_apk() {
 }
 
 if ! build_apk; then
-  echo "First build failed. Applying libffi/autotools recovery and retrying..."
+  echo "First build failed. Applying recovery (libffi/autotools + p4a compatibility) and retrying..."
+  ensure_modern_p4a_if_needed
   rm -rf "$REPO_ROOT/android_client/.buildozer/android/platform/python-for-android" || true
   rm -rf "$REPO_ROOT/android_client/.buildozer/android/platform/build-"* || true
   (
     cd "$REPO_ROOT/android_client"
     buildozer android clean || true
   )
-  build_apk
+  build_apk || true
+
+  if [[ -f "$REPO_ROOT/android_client/.buildozer/android/platform/python-for-android/pythonforandroid/toolchain.py" ]] \
+    && grep -q "import imp" "$REPO_ROOT/android_client/.buildozer/android/platform/python-for-android/pythonforandroid/toolchain.py"; then
+    echo "Detected legacy p4a using imp. Forcing p4a master + clean rebuild..."
+    ensure_modern_p4a_if_needed
+    rm -rf "$REPO_ROOT/android_client/.buildozer/android/platform/python-for-android" || true
+    rm -rf "$REPO_ROOT/android_client/.buildozer/android/platform/build-"* || true
+    build_apk
+  fi
 fi
 
 echo "[6/7] Committing any pending changes..."

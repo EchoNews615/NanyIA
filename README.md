@@ -117,3 +117,13 @@ Você pode repetir:
 ```bash
 bash scripts/sync_and_build_apk
 ```
+
+
+### Erro `ModuleNotFoundError: No module named imp`
+Se aparecer esse erro no `python-for-android/toolchain.py`, significa branch antiga do p4a com Python host 3.12.
+
+Ajustes aplicados no projeto:
+- `p4a.branch = master`
+- `android.ndk = 25b`
+
+E o script `sync_and_build_apk` já tenta corrigir isso automaticamente e refazer o build.
