@@ -104,3 +104,16 @@ O script:
 
 
 > Pode rodar a partir de qualquer diretório: o script detecta automaticamente a raiz do repositório.
+
+
+### Erro do libffi/autotools (LT_SYS_SYMBOL_USCORE)
+Se aparecer erro parecido com `possibly undefined macro: LT_SYS_SYMBOL_USCORE` durante `autogen.sh` do libffi, o script já tenta:
+- instalar `autoconf automake libtool libtool-bin pkg-config m4 gettext bison flex`;
+- limpar cache do `python-for-android`/build anterior;
+- rodar o build novamente.
+
+Você pode repetir:
+
+```bash
+bash scripts/sync_and_build_apk
+```

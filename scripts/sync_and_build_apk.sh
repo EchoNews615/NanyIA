@@ -9,9 +9,9 @@ BRANCH="${2:-$(git -C "$REPO_ROOT" branch --show-current || echo work)}"
 
 cd "$REPO_ROOT"
 
-echo "[0/6] Repo root: $REPO_ROOT"
+echo "[0/7] Repo root: $REPO_ROOT"
 
-echo "[1/6] Checking git remote..."
+echo "[1/7] Checking git remote..."
 if git remote get-url origin >/dev/null 2>&1; then
   echo "origin: $(git remote get-url origin)"
 else
@@ -24,23 +24,41 @@ else
   echo "origin added: $REMOTE_URL"
 fi
 
-echo "[2/6] Checking Python/build dependencies..."
+echo "[2/7] Checking Python/build dependencies..."
 python3 --version || true
 pip --version || true
 
 if ! command -v buildozer >/dev/null 2>&1; then
   echo "Buildozer not found. Trying to install via pip..."
-  if ! pip install buildozer cython; then
-    echo "pip install failed (likely network/proxy restriction)."
-    echo "Trying apt install..."
-    if ! apt-get update -y || ! apt-get install -y buildozer; then
-      echo "Could not install buildozer automatically."
-      exit 3
-    fi
+  pip install buildozer cython || true
+fi
+
+if ! command -v buildozer >/dev/null 2>&1; then
+  echo "Trying apt install of buildozer tooling..."
+  if command -v sudo >/dev/null 2>&1; then
+    sudo apt-get update -y || true
+    sudo apt-get install -y buildozer || true
+  else
+    apt-get update -y || true
+    apt-get install -y buildozer || true
   fi
 fi
 
-echo "[3/6] Running Python syntax checks..."
+if ! command -v buildozer >/dev/null 2>&1; then
+  echo "Could not install buildozer automatically."
+  exit 3
+fi
+
+echo "[3/7] Installing Android native build prerequisites (libtool/autoconf/automake)..."
+if command -v sudo >/dev/null 2>&1; then
+  sudo apt-get update -y || true
+  sudo apt-get install -y autoconf automake libtool libtool-bin pkg-config m4 gettext bison flex || true
+else
+  apt-get update -y || true
+  apt-get install -y autoconf automake libtool libtool-bin pkg-config m4 gettext bison flex || true
+fi
+
+echo "[4/7] Running Python syntax checks..."
 python -m py_compile \
   terminal_ai.py \
   hand_control_mediapipe.py \
@@ -49,19 +67,32 @@ python -m py_compile \
   android_client/service.py \
   discord_bot.py
 
-echo "[4/6] Building APK..."
-(
-  cd "$REPO_ROOT/android_client"
-  buildozer android debug
-)
+build_apk() {
+  echo "[5/7] Building APK..."
+  (
+    cd "$REPO_ROOT/android_client"
+    buildozer android debug
+  )
+}
 
-echo "[5/6] Committing any pending changes..."
+if ! build_apk; then
+  echo "First build failed. Applying libffi/autotools recovery and retrying..."
+  rm -rf "$REPO_ROOT/android_client/.buildozer/android/platform/python-for-android" || true
+  rm -rf "$REPO_ROOT/android_client/.buildozer/android/platform/build-"* || true
+  (
+    cd "$REPO_ROOT/android_client"
+    buildozer android clean || true
+  )
+  build_apk
+fi
+
+echo "[6/7] Committing any pending changes..."
 if [[ -n "$(git status --porcelain)" ]]; then
   git add -A
   git commit -m "chore: sync before apk build"
 fi
 
-echo "[6/6] Pushing to GitHub..."
+echo "[7/7] Pushing to GitHub..."
 git push -u origin "$BRANCH"
 
 echo "Done."

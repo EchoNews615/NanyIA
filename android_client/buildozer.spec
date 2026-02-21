@@ -4,11 +4,14 @@ package.name = nanyia
 package.domain = org.nany
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas
-version = 0.2
-requirements = python3,kivy,requests
+version = 0.3
+requirements = python3==3.11.9,kivy==2.3.0,requests
 orientation = portrait
 android.permissions = INTERNET,RECORD_AUDIO,FOREGROUND_SERVICE,WAKE_LOCK
 services = nanyia_service:service.py
+
+# Pin python-for-android to a stable branch to avoid random regressions from master.
+p4a.branch = stable
 
 [buildozer]
 log_level = 2
