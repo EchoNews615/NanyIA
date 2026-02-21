@@ -84,13 +84,15 @@ Use `PROMPT_NANYIA.md` para comportamento operacional da IA.
 Para automatizar remote/push/build em uma máquina com internet e toolchain Android:
 
 ```bash
+bash scripts/sync_and_build_apk <URL_DO_REPO_GITHUB> [branch]
+# ou
 bash scripts/sync_and_build_apk.sh <URL_DO_REPO_GITHUB> [branch]
 ```
 
 Exemplo:
 
 ```bash
-bash scripts/sync_and_build_apk.sh https://github.com/seu-user/nanyia.git work
+bash scripts/sync_and_build_apk https://github.com/seu-user/nanyia.git work
 ```
 
 O script:
@@ -99,3 +101,6 @@ O script:
 - compila os arquivos Python;
 - gera APK com `buildozer android debug`;
 - faz push para o GitHub.
+
+
+> Pode rodar a partir de qualquer diretório: o script detecta automaticamente a raiz do repositório.

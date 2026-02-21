@@ -1,8 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
 REMOTE_URL="${1:-}"
-BRANCH="${2:-work}"
+BRANCH="${2:-$(git -C "$REPO_ROOT" branch --show-current || echo work)}"
+
+cd "$REPO_ROOT"
+
+echo "[0/6] Repo root: $REPO_ROOT"
 
 echo "[1/6] Checking git remote..."
 if git remote get-url origin >/dev/null 2>&1; then
@@ -34,11 +41,17 @@ if ! command -v buildozer >/dev/null 2>&1; then
 fi
 
 echo "[3/6] Running Python syntax checks..."
-python -m py_compile terminal_ai.py hand_control_mediapipe.py mobile_api/server.py android_client/main.py android_client/service.py discord_bot.py
+python -m py_compile \
+  terminal_ai.py \
+  hand_control_mediapipe.py \
+  mobile_api/server.py \
+  android_client/main.py \
+  android_client/service.py \
+  discord_bot.py
 
 echo "[4/6] Building APK..."
 (
-  cd android_client
+  cd "$REPO_ROOT/android_client"
   buildozer android debug
 )
 
