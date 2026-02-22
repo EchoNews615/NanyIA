@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+android_client/__pycache__/
+mobile_api/__pycache__/
+
+android_client/.buildozer/
