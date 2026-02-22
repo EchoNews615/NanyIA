@@ -155,3 +155,12 @@ Ajustes aplicados no projeto:
 - `android.ndk = 25b`
 
 E o script `sync_and_build_apk` já tenta corrigir isso automaticamente e refazer o build.
+
+
+## Modo multi-servidor (PC + Codespaces + celular)
+- Defina no `.env`: `SHARED_NANYIA_SERVERS` com URLs dos nós ativos.
+- A API expõe `GET /servers` para listar peers conhecidos.
+- No app Android, use **Escanear servidores** para detectar `.../health` e conectar no primeiro disponível.
+- Isso ajuda a manter você conectado à mesma NanyIA lógica de backend (um hub principal + nós secundários).
+
+> Observação importante: comandos destrutivos/remotos em dispositivos devem ser habilitados explicitamente com autenticação forte (tokens, ACL por dispositivo, 2FA). Não implementei “protocolo de derrubar rede/dispositivos” por segurança operacional.

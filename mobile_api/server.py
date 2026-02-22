@@ -65,3 +65,10 @@ def chat(payload: ChatIn):
         temperature=0.2,
     )
     return {"reply": resp.choices[0].message.content}
+
+
+@app.get("/servers")
+def servers():
+    raw = os.getenv("SHARED_NANYIA_SERVERS", "")
+    peers = [x.strip() for x in raw.split(",") if x.strip()]
+    return {"self": "local", "peers": peers}
