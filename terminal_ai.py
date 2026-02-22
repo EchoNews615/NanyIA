@@ -12,6 +12,27 @@ from pathlib import Path
 from dotenv import load_dotenv
 from openai import OpenAI
 
+
+def build_llm_client() -> OpenAI:
+    provider = os.getenv("LLM_PROVIDER", "openai").lower()
+    model = os.getenv("MODEL_NAME", "gpt-4o-mini")
+
+    if provider == "openrouter":
+        api_key = os.getenv("OPENROUTER_API_KEY")
+        if not api_key:
+            raise RuntimeError("Defina OPENROUTER_API_KEY no .env")
+        return OpenAI(api_key=api_key, base_url="https://openrouter.ai/api/v1")
+
+    if provider == "ollama":
+        base = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434/v1")
+        return OpenAI(api_key=os.getenv("OLLAMA_API_KEY", "ollama"), base_url=base)
+
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("Defina OPENAI_API_KEY no .env")
+    return OpenAI(api_key=api_key)
+
+
 try:
     import pyttsx3
 except Exception:
@@ -206,13 +227,10 @@ def execute_tool(name: str, args: dict, memory: MemoryStore) -> str:
 
 def chat_loop() -> None:
     load_dotenv()
-    api_key = os.getenv("OPENAI_API_KEY")
     model = os.getenv("MODEL_NAME", "gpt-4o-mini")
-    if not api_key:
-        raise RuntimeError("Defina OPENAI_API_KEY no .env")
 
     memory = MemoryStore(MEMORY_DB)
-    client = OpenAI(api_key=api_key)
+    client = build_llm_client()
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
     print("NanyIA online (texto+voz). Digite sair para encerrar.")
 

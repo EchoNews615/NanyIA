@@ -6,6 +6,23 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from openai import OpenAI
 
+
+def build_llm_client() -> OpenAI:
+    provider = os.getenv("LLM_PROVIDER", "openai").lower()
+    if provider == "openrouter":
+        api_key = os.getenv("OPENROUTER_API_KEY")
+        if not api_key:
+            raise RuntimeError("OPENROUTER_API_KEY ausente")
+        return OpenAI(api_key=api_key, base_url="https://openrouter.ai/api/v1")
+    if provider == "ollama":
+        base = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434/v1")
+        return OpenAI(api_key=os.getenv("OLLAMA_API_KEY", "ollama"), base_url=base)
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("OPENAI_API_KEY ausente")
+    return OpenAI(api_key=api_key)
+
+
 app = FastAPI(title="NanyIA Mobile Bridge", version="2.0")
 
 origins_env = os.getenv("MOBILE_API_CORS_ORIGINS", "*")
@@ -35,11 +52,10 @@ def health():
 
 @app.post("/chat")
 def chat(payload: ChatIn):
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        return {"error": "OPENAI_API_KEY ausente"}
-
-    client = OpenAI(api_key=api_key)
+    try:
+        client = build_llm_client()
+    except RuntimeError as exc:
+        return {"error": str(exc)}
     resp = client.chat.completions.create(
         model=payload.model,
         messages=[

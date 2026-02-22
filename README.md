@@ -27,6 +27,32 @@ cp .env.example .env
 python terminal_ai.py
 ```
 
+
+
+## Provedores de IA grátis/alternativos
+Agora você pode usar a NanyIA com múltiplos provedores:
+
+- `openrouter` (inclui modelos gratuitos `:free`)
+- `ollama` (local, sem custo por token)
+- `openai` (opcional)
+
+Exemplo `.env` para OpenRouter:
+
+```env
+LLM_PROVIDER=openrouter
+MODEL_NAME=deepseek/deepseek-r1-0528:free
+OPENROUTER_API_KEY=sua_chave
+```
+
+Exemplo `.env` para Ollama local:
+
+```env
+LLM_PROVIDER=ollama
+MODEL_NAME=qwen2.5:7b-instruct
+OLLAMA_BASE_URL=http://127.0.0.1:11434/v1
+OLLAMA_API_KEY=ollama
+```
+
 ## 2) Mobile bridge (local ou servidor central)
 
 ```bash
@@ -117,6 +143,8 @@ Você pode repetir:
 ```bash
 bash scripts/sync_and_build_apk
 ```
+
+O script agora também tenta uma correção automática com `libtoolize/aclocal/autoreconf` dentro do diretório do libffi antes de novo retry.
 
 
 ### Erro `ModuleNotFoundError: No module named imp`

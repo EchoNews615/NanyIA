@@ -82,6 +82,23 @@ ensure_modern_p4a_if_needed() {
   fi
 }
 
+repair_libffi_autotools() {
+  local base="$REPO_ROOT/android_client/.buildozer/android/platform"
+  echo "Trying libffi autotools macro repair..."
+  mapfile -t candidates < <(find "$base" -type f -path '*libffi/*/libffi/configure.ac' 2>/dev/null || true)
+  for cfg in "${candidates[@]}"; do
+    local d
+    d="$(dirname "$cfg")"
+    echo "Repairing $d"
+    (
+      cd "$d"
+      libtoolize --force --copy || true
+      aclocal -I m4 || true
+      autoreconf -fi || true
+    )
+  done
+}
+
 build_apk() {
   echo "[5/7] Building APK..."
   (
@@ -99,6 +116,8 @@ if ! build_apk; then
     cd "$REPO_ROOT/android_client"
     yes y | buildozer android clean || true
   )
+  build_apk || true
+  repair_libffi_autotools
   build_apk || true
 
   if [[ -f "$REPO_ROOT/android_client/.buildozer/android/platform/python-for-android/pythonforandroid/toolchain.py" ]] \
